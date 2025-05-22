@@ -1,0 +1,14 @@
+image: gitpod/workspace-full:latest
+
+tasks:
+  - name: Setup Laravel
+    init: |
+      composer install
+      cp .env.example .env
+      php artisan key:generate
+    command: |
+      php artisan serve --host=0.0.0.0
+
+ports:
+  - port: 8000
+    onOpen: open-preview
