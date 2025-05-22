@@ -1,14 +1,36 @@
 image: gitpod/workspace-full:latest
 
-tasks:
-  - name: Setup Laravel
-    init: |
-      composer install
-      cp .env.example .env
-      php artisan key:generate
-    command: |
-      php artisan serve --host=0.0.0.0
-
 ports:
   - port: 8000
     onOpen: open-preview
+  - port: 3306
+    onOpen: ignore
+
+tasks:
+  - name: Setup Laravel with MySQL
+    init: |
+      # Start MySQL and set root password
+      sudo service mysql start
+      sudo mysql -e "ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '';"
+      sudo mysql -e "CREATE DATABASE laravel;"
+      
+      # Install Laravel dependencies
+      composer install
+      
+      # Setup .env and generate key
+      cp .env.example .env
+      php artisan key:generate
+
+      # Update .env for MySQL
+      sed -i 's/DB_CONNECTION=.*/DB_CONNECTION=mysql/' .env
+      sed -i 's/DB_HOST=.*/DB_HOST=127.0.0.1/' .env
+      sed -i 's/DB_PORT=.*/DB_PORT=3306/' .env
+      sed -i 's/DB_DATABASE=.*/DB_DATABASE=laravel/' .env
+      sed -i 's/DB_USERNAME=.*/DB_USERNAME=root/' .env
+      sed -i 's/DB_PASSWORD=.*/DB_PASSWORD=/' .env
+
+      # Run migrations if needed
+      php artisan migrate || true
+
+    command: |
+      php artisan serve --host=0.0.0.0 --port=8000
